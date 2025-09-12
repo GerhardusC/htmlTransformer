@@ -72,6 +72,8 @@ impl TransformContents for NodeRef {
     }
 }
 
+/** 
+* Transforms the case of an HTML string */
 pub fn change_tag_content_case(
     html: &str,
     selector: &str,
@@ -171,6 +173,17 @@ mod tests {
         let input_html = r"<html><div><p>hello world</p></div></html>";
         let expected_html = r"<html><div><p>HELLO WORLD</p></div></html>";
 
+        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
+            .expect("Should be able to parse msg");
+
+        assert_eq!(res, expected_html);
+    }
+
+    #[test]
+    fn adjacent_tags_handled_fine() {
+        let input_html = r"<span>hey</span><p>Hello, hoWsit?</p>";
+        let expected_html = r"<span>hey</span><p>HELLO, HOWSIT?</p>";
+  
         let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
             .expect("Should be able to parse msg");
 
