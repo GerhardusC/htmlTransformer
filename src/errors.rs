@@ -6,4 +6,6 @@ pub enum ApplicationError {
     ParseError,
     #[error("Failed to manipulate string correctly")]
     StringManipulationError,
+    #[error("Server init error")]
+    ServerInitError(#[from] std::io::Error),
 }
