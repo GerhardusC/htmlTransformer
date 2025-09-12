@@ -74,7 +74,7 @@ impl TransformContents for NodeRef {
 
 /** 
 * Transforms the case of an HTML string */
-pub fn change_tag_content_case(
+pub fn transform_case(
     html: &str,
     selector: &str,
     target_case: TargetCase,
@@ -151,7 +151,7 @@ mod tests {
         let input_html = "<!DOCTYPE html><html><head><title>Simple Paragraph Example</title></head><body><p class=\"asd\">This is the first paragraph of our example.</p><p>Here's a second paragraph, containing some more text.</p><p>This paragraph demonstrates a simple HTML structure.</p><p>Finally, this is the last paragraph in our short example.</p></body></html>";
         let expected_html = "<!DOCTYPE html><html><head><title>Simple Paragraph Example</title></head><body><p class=\"asd\">THIS IS THE FIRST PARAGRAPH OF OUR EXAMPLE.</p><p>HERE'S A SECOND PARAGRAPH, CONTAINING SOME MORE TEXT.</p><p>THIS PARAGRAPH DEMONSTRATES A SIMPLE HTML STRUCTURE.</p><p>FINALLY, THIS IS THE LAST PARAGRAPH IN OUR SHORT EXAMPLE.</p></body></html>";
 
-        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
+        let res = transform_case(input_html, "p", TargetCase::UpperCase)
             .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
@@ -162,7 +162,7 @@ mod tests {
         let input_html = r"<div><p>hello world</p></div>";
         let expected_html = r"<div><p>HELLO WORLD</p></div>";
 
-        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
+        let res = transform_case(input_html, "p", TargetCase::UpperCase)
             .expect("Should be able to parse msg");
 
         assert_eq!(res, expected_html);
@@ -173,7 +173,7 @@ mod tests {
         let input_html = r"<html><div><p>hello world</p></div></html>";
         let expected_html = r"<html><div><p>HELLO WORLD</p></div></html>";
 
-        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
+        let res = transform_case(input_html, "p", TargetCase::UpperCase)
             .expect("Should be able to parse msg");
 
         assert_eq!(res, expected_html);
@@ -184,7 +184,7 @@ mod tests {
         let input_html = r"<span>hey</span><p>Hello, hoWsit?</p>";
         let expected_html = r"<span>hey</span><p>HELLO, HOWSIT?</p>";
   
-        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
+        let res = transform_case(input_html, "p", TargetCase::UpperCase)
             .expect("Should be able to parse msg");
 
         assert_eq!(res, expected_html);

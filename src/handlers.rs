@@ -1,7 +1,7 @@
 use axum::{http::StatusCode, Json};
 use serde::Deserialize;
 
-use crate::parsing::{change_tag_content_case, TargetCase};
+use crate::parsing::{transform_case, TargetCase};
 
 #[derive(Deserialize)]
 pub struct ReqBody {
@@ -24,7 +24,7 @@ pub async fn transform_case_handler(Json(payload): Json<ReqBody>) -> (StatusCode
         }
     };
 
-    match change_tag_content_case(
+    match transform_case(
         &html,
         &selector.unwrap_or("p".to_owned()),
         target_case
