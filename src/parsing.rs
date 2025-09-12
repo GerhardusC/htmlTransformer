@@ -190,4 +190,15 @@ mod tests {
         assert_eq!(res, expected_html);
     }
 
+    #[test]
+    fn multiple_selectors_handled_fine() {
+        let input_html = "<div class=\"asd\">tag</div><span>hEy</span><p>Hello, hoWsit?</p>";
+        let expected_html = "<div class=\"asd\">tag</div><span>HEY</span><p>HELLO, HOWSIT?</p>";
+    
+        let res = transform_case(input_html, "span,p", TargetCase::UpperCase)
+            .expect("Should be able to parse msg");
+
+        assert_eq!(res, expected_html);
+    }
+
 }
