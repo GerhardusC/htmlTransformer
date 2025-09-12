@@ -1,23 +1,57 @@
 mod errors;
 
-use std::error::Error;
 use kuchikiki::{
-    iter::NodeIterator, parse_html, traits::TendrilSink,
+    NodeRef, ParseOpts, QualName,
+    interface::QuirksMode,
+    iter::{Descendants, Elements, NodeIterator, Select},
+    local_name, namespace_url, ns, parse_fragment, parse_html, parse_html_with_options,
+    tokenizer::TokenizerOpts,
+    traits::TendrilSink,
+    tree_builder::TreeBuilderOpts,
 };
+use std::error::Error;
+
+use crate::errors::ApplicationError;
 
 pub enum TargetCase {
     UpperCase,
     LowerCase,
 }
 
-pub fn change_tag_content_case(
-    html: &str,
-    selector: &str,
-    target_case: TargetCase,
-) -> Result<String, Box<dyn Error>> {
-    let doc = parse_html().one(html);
-    match doc.select(selector) {
-        Ok(x) => {
+enum InputDocumentKind {
+    Document,
+    Fragment,
+}
+
+impl InputDocumentKind {
+    fn parse(&self, html: &str) -> NodeRef {
+        match self {
+            InputDocumentKind::Document => {
+                // Leaving this here with options so later we can configure. All the imports are ready.
+                parse_html_with_options(ParseOpts {
+                    tree_builder: TreeBuilderOpts {
+                        drop_doctype: false,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                })
+                .one(html)
+            }
+            InputDocumentKind::Fragment => {
+                let qual_name = QualName::new(None, ns!(html), local_name!(""));
+                parse_fragment(qual_name, vec![]).one(html)
+            }
+        }
+    }
+}
+
+trait TransformContents {
+    fn change_case(&self, selector: &str, target_case: TargetCase) -> Result<(), ApplicationError>;
+}
+
+impl TransformContents for NodeRef {
+    fn change_case(&self, selector: &str, target_case: TargetCase) -> Result<(), ApplicationError> {
+        if let Ok(x) = self.select(selector) {
             x.for_each(|x| {
                 x.as_node()
                     .descendants()
@@ -30,11 +64,27 @@ pub fn change_tag_content_case(
                         *text_cell.borrow_mut() = new_val;
                     });
             });
+            Ok(())
+        } else {
+            return Err(errors::ApplicationError::ParseError);
         }
-        Err(_) => {
-            return Err(errors::ApplicationError::ParseError.into());
-        }
+    }
+}
+
+pub fn change_tag_content_case(
+    html: &str,
+    selector: &str,
+    target_case: TargetCase,
+) -> Result<String, Box<dyn Error>> {
+    let current_doctype = if html.starts_with("<!DOCTYPE") {
+        InputDocumentKind::Document
+    } else {
+        InputDocumentKind::Fragment
     };
+
+    let doc = current_doctype.parse(html);
+
+    doc.change_case(selector, target_case)?;
 
     return Ok(doc.to_string());
 }
@@ -46,7 +96,18 @@ mod tests {
     #[test]
     fn uppercase_single_element() {
         let input_html = r"<p>hello world</p>";
-        let expected_html = r"<html><head></head><body><p>HELLO WORLD</p></body></html>";
+        let expected_html = r"<html><p>HELLO WORLD</p></html>";
+
+        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
+            .expect("Should be able to parse msg");
+
+        assert_eq!(res, expected_html);
+    }
+
+    #[test]
+    fn uppercase_single_nested_element() {
+        let input_html = r"<div><p>hello world</p></div>";
+        let expected_html = r"<html><div><p>HELLO WORLD</p></div></html>";
 
         let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
             .expect("Should be able to parse msg");
