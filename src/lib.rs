@@ -46,11 +46,11 @@ impl InputDocumentKind {
 }
 
 trait TransformContents {
-    fn change_case(&self, selector: &str, target_case: TargetCase) -> Result<(), ApplicationError>;
+    fn change_case(self, selector: &str, target_case: TargetCase) -> Result<NodeRef, ApplicationError>;
 }
 
 impl TransformContents for NodeRef {
-    fn change_case(&self, selector: &str, target_case: TargetCase) -> Result<(), ApplicationError> {
+    fn change_case(self, selector: &str, target_case: TargetCase) -> Result<NodeRef, ApplicationError> {
         if let Ok(x) = self.select(selector) {
             x.for_each(|x| {
                 x.as_node()
@@ -64,7 +64,7 @@ impl TransformContents for NodeRef {
                         *text_cell.borrow_mut() = new_val;
                     });
             });
-            Ok(())
+            Ok(self)
         } else {
             return Err(errors::ApplicationError::ParseError);
         }
@@ -82,9 +82,9 @@ pub fn change_tag_content_case(
         InputDocumentKind::Fragment
     };
 
-    let doc = current_doctype.parse(html);
-
-    doc.change_case(selector, target_case)?;
+    let doc = current_doctype
+        .parse(html)
+        .change_case(selector, target_case)?;
 
     return Ok(doc.to_string());
 }
@@ -93,11 +93,42 @@ pub fn change_tag_content_case(
 mod tests {
     use super::*;
 
+    // Internals
     #[test]
-    fn uppercase_single_element() {
+    // Fragment
+    fn uppercase_single_element_keep_wrapped_in_html() {
         let input_html = r"<p>hello world</p>";
         let expected_html = r"<html><p>HELLO WORLD</p></html>";
 
+        let res = InputDocumentKind::Fragment
+            .parse(input_html)
+            .change_case("p", TargetCase::UpperCase)
+            .expect("Should be able to parse valid HTML");
+
+
+        assert_eq!(res.to_string(), expected_html);
+    }
+
+    #[test]
+    // Document
+    fn uppercase_document() {
+        let input_html = "<!DOCTYPE html><html><head><title>Simple Paragraph Example</title></head><body><p class=\"asd\">This is the first paragraph of our example.</p><p>Here's a second paragraph, containing some more text.</p><p>This paragraph demonstrates a simple HTML structure.</p><p>Finally, this is the last paragraph in our short example.</p></body></html>";
+        let expected_html = "<!DOCTYPE html><html><head><title>Simple Paragraph Example</title></head><body><p class=\"asd\">THIS IS THE FIRST PARAGRAPH OF OUR EXAMPLE.</p><p>HERE'S A SECOND PARAGRAPH, CONTAINING SOME MORE TEXT.</p><p>THIS PARAGRAPH DEMONSTRATES A SIMPLE HTML STRUCTURE.</p><p>FINALLY, THIS IS THE LAST PARAGRAPH IN OUR SHORT EXAMPLE.</p></body></html>";
+
+    let res = InputDocumentKind::Document
+            .parse(input_html)
+            .change_case("p", TargetCase::UpperCase)
+            .expect("Should be able to parse valid HTML");
+
+        assert_eq!(res.to_string(), expected_html);
+    }
+
+    // External
+    #[test]
+    fn uppercase_single_element_only() {
+        let input_html = r"<p>hello world</p>";
+        let expected_html = r"<p>HELLO WORLD</p>";
+
         let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
             .expect("Should be able to parse msg");
 
@@ -105,18 +136,7 @@ mod tests {
     }
 
     #[test]
-    fn uppercase_single_nested_element() {
-        let input_html = r"<div><p>hello world</p></div>";
-        let expected_html = r"<html><div><p>HELLO WORLD</p></div></html>";
-
-        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
-
-        assert_eq!(res, expected_html);
-    }
-
-    #[test]
-    fn uppercases_all_p_tags() {
+    fn uppercases_all_p_tags_with_doctype_intact() {
         let input_html = "<!DOCTYPE html><html><head><title>Simple Paragraph Example</title></head><body><p class=\"asd\">This is the first paragraph of our example.</p><p>Here's a second paragraph, containing some more text.</p><p>This paragraph demonstrates a simple HTML structure.</p><p>Finally, this is the last paragraph in our short example.</p></body></html>";
         let expected_html = "<!DOCTYPE html><html><head><title>Simple Paragraph Example</title></head><body><p class=\"asd\">THIS IS THE FIRST PARAGRAPH OF OUR EXAMPLE.</p><p>HERE'S A SECOND PARAGRAPH, CONTAINING SOME MORE TEXT.</p><p>THIS PARAGRAPH DEMONSTRATES A SIMPLE HTML STRUCTURE.</p><p>FINALLY, THIS IS THE LAST PARAGRAPH IN OUR SHORT EXAMPLE.</p></body></html>";
 
@@ -125,4 +145,27 @@ mod tests {
 
         assert_eq!(res, expected_html);
     }
+
+    #[test]
+    fn uppercase_single_nested_element() {
+        let input_html = r"<div><p>hello world</p></div>";
+        let expected_html = r"<div><p>HELLO WORLD</p></div>";
+
+        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
+            .expect("Should be able to parse msg");
+
+        assert_eq!(res, expected_html);
+    }
+
+    #[test]
+    fn leaves_html_tag_in_tact() {
+        let input_html = r"<html><div><p>hello world</p></div><html>";
+        let expected_html = r"<html><div><p>HELLO WORLD</p></div></html>";
+
+        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
+            .expect("Should be able to parse msg");
+
+        assert_eq!(res, expected_html);
+    }
+
 }
