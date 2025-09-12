@@ -1,11 +1,10 @@
 mod errors;
 
 use kuchikiki::{
+    namespace_url,
     NodeRef, ParseOpts, QualName,
-    interface::QuirksMode,
-    iter::{Descendants, Elements, NodeIterator, Select},
-    local_name, namespace_url, ns, parse_fragment, parse_html, parse_html_with_options,
-    tokenizer::TokenizerOpts,
+    iter::NodeIterator,
+    local_name, ns, parse_fragment, parse_html_with_options,
     traits::TendrilSink,
     tree_builder::TreeBuilderOpts,
 };
