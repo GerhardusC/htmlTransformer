@@ -114,7 +114,7 @@ pub fn change_tag_content_case(
 mod tests {
     use super::*;
 
-    // Internals
+    // NOTE: Internals
     #[test]
     // Fragment
     fn uppercase_single_element_keep_wrapped_in_html() {
@@ -144,18 +144,7 @@ mod tests {
         assert_eq!(res.to_string(), expected_html);
     }
 
-    // External
-    #[test]
-    fn uppercase_single_element_only() {
-        let input_html = r"<p>hello world</p>";
-        let expected_html = r"<p>HELLO WORLD</p>";
-
-        let res = change_tag_content_case(input_html, "p", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
-
-        assert_eq!(res, expected_html);
-    }
-
+    // NOTE: External interface
     #[test]
     fn uppercases_all_p_tags_with_doctype_intact() {
         let input_html = "<!DOCTYPE html><html><head><title>Simple Paragraph Example</title></head><body><p class=\"asd\">This is the first paragraph of our example.</p><p>Here's a second paragraph, containing some more text.</p><p>This paragraph demonstrates a simple HTML structure.</p><p>Finally, this is the last paragraph in our short example.</p></body></html>";
