@@ -3,6 +3,11 @@
 ## About
 This application provides a single endpoint to which you can make requests to transform the case of an XML/HTML tree based on a CSS selector. If a CSS selector is passed, all matching tags will have their contents' case transformed. By default if no selector is passed, the contents of all paragraph (`<p></p>`) tags is transformed.
 
+## Deployed version
+
+Find a deployed version of the application here:
+[https://htmltransformer.gerharduscronje.co.za/](https://htmltransformer.gerharduscronje.co.za/)
+
 ## Installation
 
 ### Build from source
@@ -122,3 +127,6 @@ I use the Axum web framework for the API as it is well documented and has a good
 ##### Clap
 I know clap is slightly overkill here, but it only adds compile time, but gives the convenience of a neat help page and an easy to maintain args object.
 
+#### Deployement
+
+Running this on my old laptop in a cloudflare tunnel with select ports exposed.
