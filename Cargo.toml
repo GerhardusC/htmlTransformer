@@ -5,7 +5,10 @@ edition = "2024"
 
 [dependencies]
 axum = { version = "0.8.4", features = ["macros"] }
+clap = "4.5.47"
+clap_derive = "4.5.47"
 kuchikiki = { git = "https://github.com/GerhardusC/kuchikikiWithReexports" }
+q = "0.1.0"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.143"
 thiserror = "2.0.16"

@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  rust-app:
+    build: .
+    container_name: rust_app
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

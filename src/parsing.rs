@@ -20,7 +20,7 @@ impl InputDocumentKind {
     fn parse(&self, html: &str) -> NodeRef {
         match self {
             InputDocumentKind::Document => {
-                // Leaving this here with options so later we can configure. All the imports are ready.
+                // NOTE: Leaving this here with options so later we can configure. All the imports are ready.
                 parse_html_with_options(ParseOpts {
                     tree_builder: TreeBuilderOpts {
                         drop_doctype: false,

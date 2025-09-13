@@ -3,12 +3,47 @@
 ## About
 This application provides a single endpoint to which you can make requests to transform the case of an XML/HTML tree based on a CSS selector. If a CSS selector is passed, all matching tags will have their contents' case transformed. By default if no selector is passed, the contents of all paragraph (`<p></p>`) tags is transformed.
 
+## Installation
+
+### Docker
+
+Using just docker:
+```bash
+docker build . -t uppercasemaker;
+docker run -p 3000:3000 uppercasemaker:latest
+```
+
+Using docker compose:
+```bash
+docker compose up -d
+```
+
+### Build from source
+
+Ensure you have the Rust toolchain installed.
+
+Run:
+```bash
+cargo build --release
+```
+
+Find the binary file in the `target/release` directory.
+
 ## Usage
 
-TODO: usage args page.
+You may choose to specify a port, otherwise the application will default to serving on port 3000
+
+Usage: rocketseed-interview [OPTIONS]
+
+Options:
+  -p, --port <PORT>  Port to serve on [default: 3000]
+  -h, --help         Print help
+  -V, --version      Print version
+
 
 ## API
 
+TODO: Serve this endpoint
 ### GET `/`
 Retrieve the help page.
 
@@ -24,7 +59,7 @@ Transform the contents of all elements matching a CSS selector to a specified ca
     type RequestBody = {
         transform: "uppercase" | "lowercase",
         html: String,
-        selector?: String
+        selector?: String | undefined
     }
 }
 ```
@@ -67,7 +102,7 @@ sequenceDiagram
     - As a Fragment: All items will be wrapped in an `<html></html>` tag by the `Kuchikiki` library. If the input string wasn't wrapped in an `<html></html>` tag to begin with, we  to remove it, otherwise we need to ensure it is not removed.
 - Finally the cleaned output is returned to the client via the REST API.
 
-### Technical details
+### More details
 
 #### Libraries used 
 
@@ -85,7 +120,6 @@ I use Tokio as an async runtime to support the Axum framework.
 ##### Axum
 I use the Axum web framework for the API as it is well documented and has a good developer experience.
 
+##### Clap
+I know clap is slightly overkill here, but it only adds compile time, but gives the convenience of a neat help page and an easy to maintain args object.
 
-TODO:
-- Get default port number from cmd line args
-- Add help page to cmd line args
