@@ -43,7 +43,6 @@ Options:
 
 ## API
 
-TODO: Serve this endpoint
 ### GET `/`
 Retrieve the help page.
 

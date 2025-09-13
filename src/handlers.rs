@@ -40,6 +40,7 @@ pub async fn transform_case_handler(Json(payload): Json<ReqBody>) -> (StatusCode
         }
     }
 }
+
 #[axum::debug_handler]
 pub async fn help_page() -> Response {
     let mut response = "# Case Transformer
