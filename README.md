@@ -5,19 +5,6 @@ This application provides a single endpoint to which you can make requests to tr
 
 ## Installation
 
-### Docker
-
-Using just docker:
-```bash
-docker build . -t uppercasemaker;
-docker run -p 3000:3000 uppercasemaker:latest
-```
-
-Using docker compose:
-```bash
-docker compose up -d
-```
-
 ### Build from source
 
 Ensure you have the Rust toolchain installed.
@@ -25,6 +12,19 @@ Ensure you have the Rust toolchain installed.
 Run:
 ```bash
 cargo build --release
+```
+
+### Docker
+
+Using just docker:
+```bash
+docker build . -t casetransformer;
+docker run -p 3000:3000 casetransformer:latest
+```
+
+Using docker compose:
+```bash
+docker compose up -d
 ```
 
 Find the binary file in the `target/release` directory.
