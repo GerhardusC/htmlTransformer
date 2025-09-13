@@ -1,4 +1,4 @@
-# Uppercase Maker
+# Case Transformer
 
 ## About
 This application provides a single endpoint to which you can make requests to transform the case of an XML/HTML tree based on a CSS selector. If a CSS selector is passed, all matching tags will have their contents' case transformed. By default if no selector is passed, the contents of all paragraph (`<p></p>`) tags is transformed.
