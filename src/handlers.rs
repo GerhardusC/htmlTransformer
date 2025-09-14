@@ -20,7 +20,7 @@ pub async fn transform_case_handler(
     let transformed_result = payload.transform_case();
 
     return if let Ok(x) = transformed_result {
-        (StatusCode::OK, x.to_owned())
+        (StatusCode::OK, x)
     } else {
         (
             StatusCode::BAD_REQUEST,
