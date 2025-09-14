@@ -63,7 +63,8 @@ impl TransformCaseInput {
             InputDocumentKind::Fragment => {
                 // Check if the original string starts with <html> and ends with </html>
                 // If it does, return doc.to_string() like is, otherwise strip these away
-                // from doc.to_string().
+                // from doc.to_string(). This is to keep the original integrity of the
+                // string in tact to ensure we don't change it.
                 if trimmed_html.starts_with("<html>") && trimmed_html.ends_with("</html>") {
                     return Ok(doc.to_string());
                 } else {
