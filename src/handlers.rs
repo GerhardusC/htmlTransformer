@@ -1,44 +1,32 @@
-use axum::{http::{HeaderName, HeaderValue, StatusCode}, response::{IntoResponse, Response}, Json};
-use serde::Deserialize;
+use axum::{
+    Json,
+    http::{HeaderName, HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
+};
 
-use crate::parsing::{transform_case, TargetCase};
-
-#[derive(Deserialize)]
-pub struct ReqBody {
-    transform: String,
-    html: String,
-    selector: Option<String>,
-}
+use crate::parsing::TransformCaseInput;
 
 #[axum::debug_handler]
-pub async fn transform_case_handler(Json(payload): Json<ReqBody>) -> (StatusCode, String) {
-    let ReqBody { html, transform, selector } = payload;
-    let target_case = match transform.to_lowercase().trim().as_ref() {
-        "uppercase" => TargetCase::UpperCase,
-        "lowercase" => TargetCase::LowerCase,
-        _ => {
-            return (
-                StatusCode::BAD_REQUEST,
-                "Invalid value received for target case.".to_owned(),
-            );
-        }
-    };
-
-    match transform_case(
-        &html,
-        &selector.unwrap_or("p".to_owned()),
-        target_case
-    ) {
-        Ok(x) => {
-            return (StatusCode::OK, x);
-        }
-        Err(_) => {
-            return (
-                StatusCode::BAD_REQUEST,
-                "Failed to parse html content".to_owned(),
-            );
-        }
+pub async fn transform_case_handler(
+    Json(payload): Json<TransformCaseInput>,
+) -> (StatusCode, String) {
+    if !payload.validate_transform() {
+        return (
+            StatusCode::BAD_REQUEST,
+            "Invalid value received for target case.".to_owned(),
+        );
     }
+
+    let transformed_result = payload.transform_case();
+
+    return if let Ok(x) = transformed_result {
+        (StatusCode::OK, x.to_owned())
+    } else {
+        (
+            StatusCode::BAD_REQUEST,
+            "Failed to parse html content".to_owned(),
+        )
+    };
 }
 
 #[axum::debug_handler]
@@ -62,7 +50,10 @@ Transform the contents of all elements matching a CSS selector to a specified ca
     }
 }
 ```".into_response();
-    response.headers_mut().insert(HeaderName::from_static("content-type"), HeaderValue::from_static("text/markdown"));
+    response.headers_mut().insert(
+        HeaderName::from_static("content-type"),
+        HeaderValue::from_static("text/markdown"),
+    );
 
     response
 }

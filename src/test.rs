@@ -2,14 +2,16 @@
 // be found in `parsing.rs`.
 #[cfg(test)]
 mod tests {
-    use crate::parsing::{transform_case, TargetCase};
+    use crate::parsing::TransformCaseInput;
+
     #[test]
     fn uppercase_transform() {
         let input_html = r"<p>Hello world</p>";
         let expected_html = r"<p>HELLO WORLD</p>";
 
-        let res = transform_case(input_html, "p", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
+        let res = TransformCaseInput::_new("uppercase", input_html, None)
+            .transform_case()
+            .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
     }
@@ -19,8 +21,9 @@ mod tests {
         let input_html = r"<p>Hello WORLD</p>";
         let expected_html = r"<p>hello world</p>";
 
-        let res = transform_case(input_html, "p", TargetCase::LowerCase)
-            .expect("Should be able to parse msg");
+        let res = TransformCaseInput::_new("lowercase", input_html, None)
+            .transform_case()
+            .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
     }
@@ -32,8 +35,9 @@ mod tests {
         let expected_html =
             r"<div><p>FIRST PARAGRAPH</p><span>Not a paragraph</span><p>SECOND PARAGRAPH</p></div>";
 
-        let res = transform_case(input_html, "p", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
+        let res = TransformCaseInput::_new("uppercase", input_html, None)
+            .transform_case()
+            .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
     }
@@ -43,8 +47,9 @@ mod tests {
         let input_html = r"<p>Text with <strong>bold</strong> and <em>italic</em> elements</p>";
         let expected_html = r"<p>TEXT WITH <strong>BOLD</strong> AND <em>ITALIC</em> ELEMENTS</p>";
 
-        let res = transform_case(input_html, "p", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
+        let res = TransformCaseInput::_new("uppercase", input_html, None)
+            .transform_case()
+            .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
     }

@@ -2,11 +2,84 @@ use kuchikiki::{
     NodeRef, ParseOpts, QualName, iter::NodeIterator, local_name, namespace_url, ns,
     parse_fragment, parse_html_with_options, traits::TendrilSink, tree_builder::TreeBuilderOpts,
 };
+use serde::Deserialize;
 use std::error::Error;
 
 use crate::errors::ApplicationError;
 
-pub enum TargetCase {
+#[derive(Deserialize)]
+pub struct TransformCaseInput {
+    transform: String,
+    html: String,
+    selector: Option<String>,
+}
+
+impl TransformCaseInput {
+    /**
+     * Creates a new TrasnformCaseInput. Currently only used by unit tests. */
+    pub fn _new(transform: &str, html: &str, selector: Option<&str>) -> Self {
+        TransformCaseInput {
+            transform: transform.to_owned(),
+            html: html.to_owned(),
+            selector: if let Some(x) = selector {
+                Some(x.to_owned())
+            } else {
+                Some("p".to_owned())
+            },
+        }
+    }
+    /**
+     * Validate transform input is valid */
+    pub fn validate_transform(&self) -> bool {
+        match self.transform.to_lowercase().trim().as_ref() {
+            "uppercase" | "lowercase" => true,
+            _ => false,
+        }
+    }
+    /**
+     * Transforms the case of an HTML string */
+    pub fn transform_case(&self) -> Result<String, Box<dyn Error>> {
+        let current_doctype = if self.html.starts_with("<!DOCTYPE") {
+            InputDocumentKind::Document
+        } else {
+            InputDocumentKind::Fragment
+        };
+
+        let selector = if let Some(selector) = &self.selector {
+            selector.as_ref()
+        } else {
+            "p"
+        };
+
+        let trimmed_html = &self.html.trim();
+        let doc = current_doctype
+            .parse(trimmed_html)
+            .change_case(selector, TargetCase::from((&self.transform).as_ref()))?;
+
+        match current_doctype {
+            InputDocumentKind::Document => {
+                return Ok(doc.to_string());
+            }
+            InputDocumentKind::Fragment => {
+                // Check if the original string starts with <html> and ends with </html>
+                // If it does, return doc.to_string() like is, otherwise strip these away
+                // from doc.to_string().
+                if trimmed_html.starts_with("<html>") && trimmed_html.ends_with("</html>") {
+                    return Ok(doc.to_string());
+                } else {
+                    if let Some(val) = doc.to_string().strip_prefix("<html>") {
+                        if let Some(val) = val.strip_suffix("</html>") {
+                            return Ok(val.to_owned());
+                        }
+                    }
+                    return Err(ApplicationError::StringManipulationError.into());
+                }
+            }
+        }
+    }
+}
+
+enum TargetCase {
     UpperCase,
     LowerCase,
 }
@@ -46,6 +119,18 @@ trait TransformContents {
     ) -> Result<NodeRef, ApplicationError>;
 }
 
+/**
+* Can create from a string slice and default to UpperCase. */
+impl From<&str> for TargetCase {
+    fn from(value: &str) -> Self {
+        match value.to_lowercase().as_ref() {
+            "uppercase" => TargetCase::UpperCase,
+            "lowercase" => TargetCase::LowerCase,
+            _ => TargetCase::UpperCase,
+        }
+    }
+}
+
 impl TransformContents for NodeRef {
     fn change_case(
         self,
@@ -68,46 +153,6 @@ impl TransformContents for NodeRef {
             Ok(self)
         } else {
             return Err(ApplicationError::ParseError);
-        }
-    }
-}
-
-/** 
-* Transforms the case of an HTML string */
-pub fn transform_case(
-    html: &str,
-    selector: &str,
-    target_case: TargetCase,
-) -> Result<String, Box<dyn Error>> {
-    let current_doctype = if html.starts_with("<!DOCTYPE") {
-        InputDocumentKind::Document
-    } else {
-        InputDocumentKind::Fragment
-    };
-
-    let trimmed_html = html.trim();
-    let doc = current_doctype
-        .parse(trimmed_html)
-        .change_case(selector, target_case)?;
-
-    match current_doctype {
-        InputDocumentKind::Document => {
-            return Ok(doc.to_string());
-        }
-        InputDocumentKind::Fragment => {
-            // Check if the original string starts with <html> and ends with </html>
-            // If it does, return doc.to_string() like is, otherwise strip these away
-            // from doc.to_string().
-            if trimmed_html.starts_with("<html>") && trimmed_html.ends_with("</html>") {
-                return Ok(doc.to_string());
-            } else {
-                if let Some(val) = doc.to_string().strip_prefix("<html>") {
-                    if let Some(val) = val.strip_suffix("</html>") {
-                        return Ok(val.to_owned());
-                    }
-                }
-                return Err(ApplicationError::StringManipulationError.into());
-            }
         }
     }
 }
@@ -151,7 +196,8 @@ mod tests {
         let input_html = "<!DOCTYPE html><html><head><title>Simple Paragraph Example</title></head><body><p class=\"asd\">This is the first paragraph of our example.</p><p>Here's a second paragraph, containing some more text.</p><p>This paragraph demonstrates a simple HTML structure.</p><p>Finally, this is the last paragraph in our short example.</p></body></html>";
         let expected_html = "<!DOCTYPE html><html><head><title>Simple Paragraph Example</title></head><body><p class=\"asd\">THIS IS THE FIRST PARAGRAPH OF OUR EXAMPLE.</p><p>HERE'S A SECOND PARAGRAPH, CONTAINING SOME MORE TEXT.</p><p>THIS PARAGRAPH DEMONSTRATES A SIMPLE HTML STRUCTURE.</p><p>FINALLY, THIS IS THE LAST PARAGRAPH IN OUR SHORT EXAMPLE.</p></body></html>";
 
-        let res = transform_case(input_html, "p", TargetCase::UpperCase)
+        let res = TransformCaseInput::_new("uppercase", input_html, None)
+            .transform_case()
             .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
@@ -162,8 +208,9 @@ mod tests {
         let input_html = r"<div><p>hello world</p></div>";
         let expected_html = r"<div><p>HELLO WORLD</p></div>";
 
-        let res = transform_case(input_html, "p", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
+        let res = TransformCaseInput::_new("uppercase", input_html, None)
+            .transform_case()
+            .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
     }
@@ -173,8 +220,9 @@ mod tests {
         let input_html = r"<html><div><p>hello world</p></div></html>";
         let expected_html = r"<html><div><p>HELLO WORLD</p></div></html>";
 
-        let res = transform_case(input_html, "p", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
+        let res = TransformCaseInput::_new("uppercase", input_html, None)
+            .transform_case()
+            .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
     }
@@ -183,9 +231,10 @@ mod tests {
     fn adjacent_tags_handled_fine() {
         let input_html = r"<span>hey</span><p>Hello, hoWsit?</p>";
         let expected_html = r"<span>hey</span><p>HELLO, HOWSIT?</p>";
-  
-        let res = transform_case(input_html, "p", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
+
+        let res = TransformCaseInput::_new("uppercase", input_html, None)
+            .transform_case()
+            .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
     }
@@ -195,8 +244,9 @@ mod tests {
         let input_html = "<div class=\"asd\">tag</div><span>hEy</span><p>Hello, hoWsit?</p>";
         let expected_html = "<div class=\"asd\">tag</div><span>HEY</span><p>HELLO, HOWSIT?</p>";
 
-        let res = transform_case(input_html, "span,p", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
+        let res = TransformCaseInput::_new("uppercase", input_html, Some("p,span"))
+            .transform_case()
+            .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
     }
@@ -205,10 +255,10 @@ mod tests {
         let input_html = "<div class=\"asd\">tag</div><span>hEy</span><p>Hello, hoWsit?</p>";
         let expected_html = "<div class=\"asd\">TAG</div><span>hEy</span><p>Hello, hoWsit?</p>";
 
-        let res = transform_case(input_html, ".asd", TargetCase::UpperCase)
-            .expect("Should be able to parse msg");
+        let res = TransformCaseInput::_new("uppercase", input_html, Some(".asd"))
+            .transform_case()
+            .unwrap_or_else(|e| e.to_string());
 
         assert_eq!(res, expected_html);
     }
 }
-

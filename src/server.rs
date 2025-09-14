@@ -1,6 +1,12 @@
-use axum::{routing::{post, get}, Router};
+use axum::{
+    Router,
+    routing::{get, post},
+};
 
-use crate::{errors::ApplicationError, handlers::{help_page, transform_case_handler}};
+use crate::{
+    errors::ApplicationError,
+    handlers::{help_page, transform_case_handler},
+};
 
 pub async fn create_server(addr: &str) -> Result<(), ApplicationError> {
     let app = Router::new()
