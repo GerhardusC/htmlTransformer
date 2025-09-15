@@ -8,4 +8,6 @@ pub struct ProgramArgs {
     /// Port to serve on
     #[arg(short, long, default_value_t = 3000)]
     pub port: u32,
+    #[arg(short, long, default_value_t = String::from("./dist"))]
+    pub serve_dir: String,
 }
