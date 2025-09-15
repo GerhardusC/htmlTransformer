@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /
 
 COPY --from=builder /target/release/rocketseed-interview /app
+COPY --from=builder dist /dist
 
 EXPOSE 3000
-CMD ["/app"]
+CMD ["/app", "-s", "/dist"]

@@ -19,6 +19,13 @@ Run:
 cargo build --release
 ```
 
+And then run the output binary,
+
+Or in development mode you can simply run:
+```bash
+cargo run -- [...ARGS]
+```
+
 ### Docker
 
 Using just docker:
@@ -41,15 +48,15 @@ You may choose to specify a port, otherwise the application will default to serv
 Usage: rocketseed-interview [OPTIONS]
 
 Options:
-  -p, --port <PORT>  Port to serve on [default: 3000]
-  -h, --help         Print help
-  -V, --version      Print version
-
+  -p, --port <PORT>            Port to serve on [default: 3000]
+  -s, --serve-dir <SERVE_DIR>  [default: ./dist]
+  -h, --help                   Print help
+  -V, --version                Print version
 
 ## API
 
 ### GET `/`
-Retrieve the help page.
+Retrieve the home page where you may test the API endpoint.
 
 ### POST `/transform`
 Transform the contents of all elements matching a CSS selector to a specified case.
@@ -62,8 +69,8 @@ Transform the contents of all elements matching a CSS selector to a specified ca
 {
     type RequestBody = {
         transform: "uppercase" | "lowercase",
-        html: String,
-        selector?: String | undefined
+        html: string,
+        selector?: string | undefined
     }
 }
 ```
