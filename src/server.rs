@@ -16,4 +16,3 @@ pub async fn create_server(addr: &str, serve_dir: &str) -> Result<(), Applicatio
     Ok(())
 }
 
-
